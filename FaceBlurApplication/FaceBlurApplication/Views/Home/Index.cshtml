@@ -1,0 +1,17 @@
+﻿@{
+    ViewData["Title"] = "Home";
+    var imagePath = @"imgs\default.png";
+}
+
+    <div class="text-center">
+        <h2 class="display-4">Hello</h2>
+        <p>FaceBlur app allows you to blur faces on photographs.</p>
+
+        <img src="@imagePath" alt="Default Image" width="50%" />
+        <hr width="60%" />
+
+        <form method="post" action="/Home/UploadImage" enctype="multipart/form-data">
+            <input type="file" name="img" />
+            <input type="submit" />
+        </form>
+    </div>
