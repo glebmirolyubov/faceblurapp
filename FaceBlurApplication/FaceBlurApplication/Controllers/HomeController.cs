@@ -12,6 +12,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
 using FaceBlurApplication.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Json.Net;
+using Newtonsoft.Json.Linq;
+using System.Drawing;
 
 namespace FaceBlurApplication.Controllers
 {
@@ -49,7 +53,7 @@ namespace FaceBlurApplication.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        public IActionResult UploadImage (IFormFile img)
+        public IActionResult UploadImage(IFormFile img)
         {
             if (img != null)
             {
@@ -112,10 +116,7 @@ namespace FaceBlurApplication.Controllers
                 // Get the JSON response.
                 string contentString = await response.Content.ReadAsStringAsync();
 
-                // Display the JSON response.
-                Console.WriteLine("\nResponse:\n");
-                Console.WriteLine(JsonPrettyPrint(contentString));
-                Console.WriteLine("\nPress Enter to exit...");
+                BlurFaces(GetFaceRectangles(contentString), imageFilePath);
             }
         }
 
@@ -130,68 +131,92 @@ namespace FaceBlurApplication.Controllers
             }
         }
 
-        // Formats the given JSON string by adding line breaks and indents.
-        static string JsonPrettyPrint(string json)
+        static JArray GetFaceRectangles(string contentString)
         {
-            if (string.IsNullOrEmpty(json))
-                return string.Empty;
+            var data = JArray.Parse(contentString);
+            var faceRectangles = new JArray();
 
-            json = json.Replace(Environment.NewLine, "").Replace("\t", "");
-
-            StringBuilder sb = new StringBuilder();
-            bool quote = false;
-            bool ignore = false;
-            int offset = 0;
-            int indentLength = 3;
-
-            foreach (char ch in json)
+            if (data.Count > 0)
             {
-                switch (ch)
+                for (int i = 0; i < data.Count; i++)
                 {
-                    case '"':
-                        if (!ignore) quote = !quote;
-                        break;
-                    case '\'':
-                        if (quote) ignore = !ignore;
-                        break;
-                }
-
-                if (quote)
-                    sb.Append(ch);
-                else
-                {
-                    switch (ch)
-                    {
-                        case '{':
-                        case '[':
-                            sb.Append(ch);
-                            sb.Append(Environment.NewLine);
-                            sb.Append(new string(' ', ++offset * indentLength));
-                            break;
-                        case '}':
-                        case ']':
-                            sb.Append(Environment.NewLine);
-                            sb.Append(new string(' ', --offset * indentLength));
-                            sb.Append(ch);
-                            break;
-                        case ',':
-                            sb.Append(ch);
-                            sb.Append(Environment.NewLine);
-                            sb.Append(new string(' ', offset * indentLength));
-                            break;
-                        case ':':
-                            sb.Append(ch);
-                            sb.Append(' ');
-                            break;
-                        default:
-                            if (ch != ' ') sb.Append(ch);
-                            break;
-                    }
+                    faceRectangles.Add(data[i]["faceRectangle"]);                   
                 }
             }
 
-            return sb.ToString().Trim();
+            return faceRectangles;
         }
+
+        static void BlurFaces(JArray facesArray, string path)
+        {
+            Bitmap bitmap = new Bitmap(path);
+
+       
+            for (int i = 0; i < facesArray.Count; i++)
+            {
+                var rectangle = new Rectangle(
+                    (int)facesArray[i]["top"],
+                    (int)facesArray[i]["left"],
+                    (int)facesArray[i]["width"],
+                    (int)facesArray[i]["height"]
+                    );
+
+                bitmap = Blur(bitmap, 10, rectangle);
+
+            }
+
+            bitmap.Save("test.jpg");
+
+            Console.WriteLine("done");
+        }
+        private static Bitmap Blur(Bitmap image, Int32 blurSize, Rectangle rectToBlur)
+        {
+            return Blur(image, new Rectangle(rectToBlur.Top, rectToBlur.Left, rectToBlur.Width, rectToBlur.Height), blurSize);
+        }
+
+        private static Bitmap Blur(Bitmap image, Rectangle rectangle, Int32 blurSize)
+        {
+            Bitmap blurred = new Bitmap(image);   //image.Width, image.Height);
+            using (Graphics graphics = Graphics.FromImage(blurred))
+            {
+                // look at every pixel in the blur rectangle
+                for (Int32 xx = rectangle.Left; xx < rectangle.Right; xx += blurSize)
+                {
+                    for (Int32 yy = rectangle.Top; yy < rectangle.Bottom; yy += blurSize)
+                    {
+                        Int32 avgR = 0, avgG = 0, avgB = 0;
+                        Int32 blurPixelCount = 0;
+                        Rectangle currentRect = new Rectangle(xx, yy, blurSize, blurSize);
+
+                        // average the color of the red, green and blue for each pixel in the
+                        // blur size while making sure you don't go outside the image bounds
+                        for (Int32 x = currentRect.Left; (x < currentRect.Right && x < image.Width); x++)
+                        {
+                            for (Int32 y = currentRect.Top; (y < currentRect.Bottom && y < image.Height); y++)
+                            {
+                                Color pixel = blurred.GetPixel(x, y);
+
+                                avgR += pixel.R;
+                                avgG += pixel.G;
+                                avgB += pixel.B;
+
+                                blurPixelCount++;
+                            }
+                        }
+
+                        avgR = avgR / blurPixelCount;
+                        avgG = avgG / blurPixelCount;
+                        avgB = avgB / blurPixelCount;
+
+                        // now that we know the average for the blur size, set each pixel to that color
+                        graphics.FillRectangle(new SolidBrush(Color.FromArgb(avgR, avgG, avgB)), currentRect);
+                    }
+                }
+                graphics.Flush();
+            }
+            return blurred;
+        }
+
 
     }
 }
