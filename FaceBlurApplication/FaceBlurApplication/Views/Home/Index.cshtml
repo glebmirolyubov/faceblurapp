@@ -1,17 +1,32 @@
 ﻿@{
     ViewData["Title"] = "Home";
-    var imagePath = @"imgs\default.png";
+    var demoImage = @"imgs\demo_image.jpg";
+    var arrowImage = @"arrow.png";
+    var demoBlurredImage = @"imgs\demo_blurred.jpg";
 }
 
     <div class="text-center">
         <h2 class="display-4">Hello</h2>
         <p>FaceBlur app allows you to blur faces on photographs.</p>
 
-        <img src="@imagePath" alt="Default Image" width="50%" />
+        <table class="table">
+            <tr>
+                <th scope="col" >
+                <img src="@demoImage" alt="Default Image" width="100%"  />
+                </th>
+                <th scope="col" style="width: 20%; vertical-align: middle;">
+                <img src="@arrowImage" alt="Arrow" width="20%" />
+                </th>
+                <th scope="col" >
+                <img src="@demoBlurredImage" alt="Default Image" width="100%"/>
+                </th>
+            </tr>
+        </table>
+
         <hr width="60%" />
 
         <form method="post" action="/Home/UploadImage" enctype="multipart/form-data">
             <input type="file" name="img" />
-            <input type="submit" />
+            <input type="submit" class="btn btn-primary btn-lg" value="BLUR IMAGE!" />
         </form>
     </div>

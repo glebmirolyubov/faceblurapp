@@ -3,11 +3,28 @@
     ViewData["Title"] = "Result";
 }
 
-<div class="text-center">
-    <h2 class="display-4">Hello</h2>
-    <p>FaceBlur app allows you to blur faces on photographs.</p>
+    <div class="text-center">
+        <h2 class="display-4">Voilà!</h2>
+        <p>FaceBlur app allows you to blur faces on photographs.</p>
 
-    <img src="@ViewData["fileLocation"]" alt="Uploaded Image" width="50%" />
+        <table class="table">
+            <tr>
+                <th scope="col">
+                    <img src="@ViewData["initialImage"]" alt="Uploaded Image" width="100%" />
+                </th>
+                <th scope="col" style="width: 20%; vertical-align: middle;">
+                    <img src="@ViewData["Arrow"]" alt="Arrow" width="20%" />
+                </th>
+                <th scope="col">
+                    <img src="@ViewData["blurredImage"]" alt="Uploaded Image" width="100%" />
+                </th>
+            </tr>
+        </table>
 
-    <hr width="60%" />
-</div>
+        <hr width="60%" />
+
+        <form method="post" action="/Home/UploadImage" enctype="multipart/form-data">
+            <input type="file" name="img" />
+            <input type="submit" class="btn btn-primary btn-lg" value="BLUR IMAGE!" />
+        </form>
+    </div>

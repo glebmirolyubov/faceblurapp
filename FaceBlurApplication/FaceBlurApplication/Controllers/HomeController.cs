@@ -23,6 +23,7 @@ namespace FaceBlurApplication.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IWebHostEnvironment _he;
+        private string _contentString;
 
         // Replace <Subscription Key> with your valid subscription key.
         const string subscriptionKey = "eabdfe0844ed4e0f89570260183ab6a7";
@@ -64,11 +65,14 @@ namespace FaceBlurApplication.Controllers
                     img.CopyTo(fileStream);
                 }
 
-                ViewData["fileLocation"] = "/" + Path.GetFileName(img.FileName);
+                ViewData["initialImage"] = "/" + Path.GetFileName(img.FileName);
+                ViewData["Arrow"] = "/arrow.png";
 
                 try
                 {
-                    MakeAnalysisRequest(fileName);
+                    Task t = MakeAnalysisRequest(fileName);
+                    t.Wait();
+                    BlurFaces(GetFaceRectangles(_contentString), fileName);
                     Console.WriteLine("\nWait a moment for the results to appear.\n");
                 }
                 catch (Exception e)
@@ -76,12 +80,11 @@ namespace FaceBlurApplication.Controllers
                     Console.WriteLine("\n" + e.Message + "\nPress Enter to exit...\n");
                 }
             }
-
             return View();
         }
 
         // Gets the analysis of the specified image by using the Face REST API.
-        static async void MakeAnalysisRequest(string imageFilePath)
+        public async Task MakeAnalysisRequest(string imageFilePath)
         {
             HttpClient client = new HttpClient();
 
@@ -115,8 +118,7 @@ namespace FaceBlurApplication.Controllers
 
                 // Get the JSON response.
                 string contentString = await response.Content.ReadAsStringAsync();
-
-                BlurFaces(GetFaceRectangles(contentString), imageFilePath);
+                _contentString = contentString;
             }
         }
 
@@ -147,11 +149,10 @@ namespace FaceBlurApplication.Controllers
             return faceRectangles;
         }
 
-        static void BlurFaces(JArray facesArray, string path)
+        public void BlurFaces(JArray facesArray, string path)
         {
             Bitmap bitmap = new Bitmap(path);
-
-       
+   
             for (int i = 0; i < facesArray.Count; i++)
             {
                 var rectangle = new Rectangle(
@@ -161,13 +162,14 @@ namespace FaceBlurApplication.Controllers
                     (int)facesArray[i]["height"]
                     );
 
-                bitmap = Blur(bitmap, 10, rectangle);
-
+                bitmap = Blur(bitmap, 20, rectangle);
             }
 
-            bitmap.Save("test.jpg");
+            string filePath = Path.Combine(_he.WebRootPath, "blurred.jpg");
 
-            Console.WriteLine("done");
+            bitmap.Save(filePath);
+
+            ViewData["blurredImage"] = "/blurred.jpg";
         }
         private static Bitmap Blur(Bitmap image, Int32 blurSize, Rectangle rectToBlur)
         {
@@ -216,7 +218,5 @@ namespace FaceBlurApplication.Controllers
             }
             return blurred;
         }
-
-
     }
 }
