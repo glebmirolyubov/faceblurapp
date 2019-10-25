@@ -25,10 +25,10 @@ namespace FaceBlurApplication.Controllers
         private readonly IWebHostEnvironment _he;
         private string _contentString;
 
-        const string subscriptionKey = "eabdfe0844ed4e0f89570260183ab6a7";
+        const string subscriptionKey = "3d8c0a687bb64a27903b162a2badaf89";
 
         const string uriBase =
-            "https://westcentralus.api.cognitive.microsoft.com/face/v1.0/detect";
+            "https://vova.cognitiveservices.azure.com/face/v1.0/detect";
 
         public HomeController(ILogger<HomeController> logger, IWebHostEnvironment he)
         {
