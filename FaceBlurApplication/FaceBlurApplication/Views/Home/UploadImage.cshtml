@@ -4,8 +4,17 @@
 }
 
     <div class="text-center">
-        <h2 class="display-4">Voilà!</h2>
-        <p>FaceBlur app allows you to blur faces on photographs.</p>
+        @if (ViewData["FaceCount"].ToString() == "NoFaces")
+        {
+            <h2 class="display-4">Oops...</h2>
+            <p>Looks like there are no faces. Please try another photo.</p>
+        }
+        else
+        {
+            <h2 class="display-4">Voilà!</h2>
+            <p>The faces have been blurred on your photograph.</p>
+        }
+
 
         <table class="table">
             <tr>
@@ -22,9 +31,8 @@
         </table>
 
         <hr width="60%" />
-
-        <form method="post" action="/Home/UploadImage" enctype="multipart/form-data">
-            <input type="file" name="img" />
-            <input type="submit" class="btn btn-primary btn-lg" value="BLUR IMAGE!" />
+        <p>Got another image to blur? Why not give it a try again!</p>
+        <form method="post" action="/Home/Index">
+            <input type="submit" class="btn btn-primary btn-lg" value="TRY AGAIN!" />
         </form>
     </div>
