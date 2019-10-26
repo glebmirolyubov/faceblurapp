@@ -5,11 +5,11 @@ FaceBlur is a .Net application that utilises Face API by Microsoft to detect fac
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
+What things you need to install and run the project:
 
 ```
 - Visual Studio 2019 or later
@@ -19,25 +19,17 @@ What things you need to install the software and how to install them
 
 ### Installing
 
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
+Clone the repository to your local machine
 
 ```
-Give the example
+https://github.com/glebmirolyubov/faceblurapp.git
 ```
 
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
+Open Visual Studio 2019 or later, click "Open a project or solution" and find the "FaceBlurApplication.sln" file in the project folder and open it.
 
 ## Deployment
 
-Add additional notes about how to deploy this on a live system
+Once the project is opened in Visual Studio you can press the green traingle on top representing start of the app. It will build the project and run it on your local machine. The app will open in your browser and you can use it.
 
 ## Authors
 
