@@ -22,7 +22,7 @@ What things you need to install and run the project:
 Clone the repository to your local machine
 
 ```
-https://github.com/glebmirolyubov/faceblurapp.git
+git clone https://github.com/glebmirolyubov/faceblurapp.git
 ```
 
 Open Visual Studio 2019 or later, click "Open a project or solution" and find the "FaceBlurApplication.sln" file in the project folder and open it.
