@@ -1,6 +1,7 @@
 # FaceBlur Application
 
 FaceBlur is a .Net application that utilises Face API by Microsoft to detect faces on photograps and then using a custom algorithms to blur the faces.
+![alt text](https://raw.githubusercontent.com/glebmirolyubov/faceblurapp/master/GitImage.png)
 
 ## Getting Started
 
