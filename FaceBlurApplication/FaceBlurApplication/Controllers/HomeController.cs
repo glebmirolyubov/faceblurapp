@@ -24,6 +24,7 @@ namespace FaceBlurApplication.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly IWebHostEnvironment _he;
         private string _contentString;
+        private int uploadedFileName = 1;
 
         const string subscriptionKey = "3d8c0a687bb64a27903b162a2badaf89";
 
@@ -58,9 +59,16 @@ namespace FaceBlurApplication.Controllers
             {
                 var fileName = Path.Combine(_he.WebRootPath, Path.GetFileName(img.FileName));
 
-                using (FileStream fileStream = new FileStream(fileName, FileMode.Create))
+                try
                 {
-                    img.CopyTo(fileStream);
+                    using (FileStream fileStream = new FileStream(fileName, FileMode.Create))
+                    {
+                        img.CopyTo(fileStream);
+                    }
+                }
+                catch (Exception e)
+                {
+                    ViewData["FaceCount"] = "NoFaces";
                 }
 
                 ViewData["initialImage"] = "/" + Path.GetFileName(img.FileName);
@@ -116,8 +124,7 @@ namespace FaceBlurApplication.Controllers
 
         static byte[] GetImageAsByteArray(string imageFilePath)
         {
-            using (FileStream fileStream =
-                new FileStream(imageFilePath, FileMode.Open, FileAccess.Read))
+            using (FileStream fileStream = new FileStream(imageFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
             {
                 BinaryReader binaryReader = new BinaryReader(fileStream);
                 return binaryReader.ReadBytes((int)fileStream.Length);
