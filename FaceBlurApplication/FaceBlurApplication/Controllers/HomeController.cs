@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Json.Net;
 using Newtonsoft.Json.Linq;
 using System.Drawing;
+using HtmlAgilityPack;
 
 namespace FaceBlurApplication.Controllers
 {
@@ -24,7 +25,6 @@ namespace FaceBlurApplication.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly IWebHostEnvironment _he;
         private string _contentString;
-        private int uploadedFileName = 1;
 
         const string subscriptionKey = "3d8c0a687bb64a27903b162a2badaf89";
 
@@ -51,6 +51,50 @@ namespace FaceBlurApplication.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        async Task LoadWebpage(string url)
+        {
+            HttpClient client = new HttpClient();
+            var response = await client.GetAsync(url);
+            var pageContents = await response.Content.ReadAsStringAsync();
+            //Console.WriteLine(pageContents);
+
+            GetAllImages(pageContents);
+        }
+
+        public void GetAllImages(string pageContent)
+        {
+            var document = new HtmlDocument();
+            document.LoadHtml(pageContent);
+
+
+            foreach (HtmlNode node in document.DocumentNode.SelectNodes("//img[@src]"))
+            {
+                var src = node.Attributes["src"].Value.Split('?');
+
+                node.SetAttributeValue("src", "https://ichef.bbc.co.uk/wwhp/144/cpsprodpb/144AE/production/_109481138_pelosi-trump-split-getty-v1.jpg");
+            }
+
+            var urls = document.DocumentNode.Descendants("img")
+                                .Select(e => e.GetAttributeValue("src", null))
+                                .Where(s => !String.IsNullOrEmpty(s));
+
+            foreach (var item in urls)
+            {
+                Console.WriteLine("IMAGE PATH: " + item);
+                //https://ichef.bbc.co.uk/wwhp/144/cpsprodpb/144AE/production/_109481138_pelosi-trump-split-getty-v1.jpg
+            }
+
+            ViewData["LoadedWebpage"] = document.DocumentNode.OuterHtml;
+        }
+
+        public IActionResult WebpageWithBlurredFaces (string url)
+        {
+            Task t = LoadWebpage(url);
+            t.Wait();
+
+            return View();
         }
 
         public IActionResult UploadImage(IFormFile img)
