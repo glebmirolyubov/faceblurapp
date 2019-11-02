@@ -3,5 +3,6 @@
     ViewData["Title"] = "WebpageWithBlurredFaces";
 }
 
-@Html.Raw(ViewData["LoadedWebpage"])
-
+    <div>
+        <iframe srcdoc="@ViewData["LoadedWebpage"]" width="100%" height="600"></iframe>
+    </div>

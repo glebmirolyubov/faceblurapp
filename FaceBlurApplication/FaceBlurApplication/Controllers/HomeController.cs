@@ -17,6 +17,8 @@ using Json.Net;
 using Newtonsoft.Json.Linq;
 using System.Drawing;
 using HtmlAgilityPack;
+using System.Net;
+using System.Web;
 
 namespace FaceBlurApplication.Controllers
 {
@@ -58,35 +60,145 @@ namespace FaceBlurApplication.Controllers
             HttpClient client = new HttpClient();
             var response = await client.GetAsync(url);
             var pageContents = await response.Content.ReadAsStringAsync();
+
             //Console.WriteLine(pageContents);
 
-            GetAllImages(pageContents);
+            //ViewData["LoadedWebpage"] = pageContents;
+
+            GetAllImages(pageContents, url);
         }
 
-        public void GetAllImages(string pageContent)
+        public void GetAllImages(string pageContent, string url)
         {
             var document = new HtmlDocument();
             document.LoadHtml(pageContent);
+
+            var urls = document.DocumentNode.Descendants("img")
+                                .Select(e => e.GetAttributeValue("src", null))
+                                .Where(s => !String.IsNullOrEmpty(s));
+
+            var uri = new Uri(url);
+            var baseUri = uri.GetLeftPart(System.UriPartial.Authority);
+            int count = 0;
+
+            /*
+            int count = 0;
+
+
+            foreach (var item in urls)
+            {
+                if (CheckURLCorrect(item) == true)
+                {
+                    System.Drawing.Image image = DownloadImageFromUrl(item);
+
+                    string rootPath = _he.WebRootPath;
+                    string fileName = System.IO.Path.Combine(rootPath, count+".jpg");
+                    image.Save(fileName);
+                    count++;
+
+                    //Task t = MakeAnalysisRequest(fileName);
+                    //t.Wait();
+
+                    //BlurFaces(GetFaceRectangles(_contentString), fileName);
+                } else
+                {
+                    string absoluteURL = baseUri + item;
+
+                    if (CheckURLCorrect(absoluteURL) == true)
+                    
+                        Console.WriteLine("CORRECT!: "+absoluteURL);                  
+                }
+            }
+            */
 
 
             foreach (HtmlNode node in document.DocumentNode.SelectNodes("//img[@src]"))
             {
                 var src = node.Attributes["src"].Value.Split('?');
 
-                node.SetAttributeValue("src", "https://ichef.bbc.co.uk/wwhp/144/cpsprodpb/144AE/production/_109481138_pelosi-trump-split-getty-v1.jpg");
-            }
+                if (CheckURLCorrect(src[0]) == true)
+                {
+                    try
+                    {
+                        System.Drawing.Image image = DownloadImageFromUrl(src[0]);
 
-            var urls = document.DocumentNode.Descendants("img")
-                                .Select(e => e.GetAttributeValue("src", null))
-                                .Where(s => !String.IsNullOrEmpty(s));
+                        string rootPath = _he.WebRootPath;
+                        string fileName = System.IO.Path.Combine(rootPath, count + ".jpg");
+                        image.Save(fileName);
+                        count++;
 
-            foreach (var item in urls)
-            {
-                Console.WriteLine("IMAGE PATH: " + item);
-                //https://ichef.bbc.co.uk/wwhp/144/cpsprodpb/144AE/production/_109481138_pelosi-trump-split-getty-v1.jpg
+                        //Task t = MakeAnalysisRequest(fileName);
+                        //t.Wait();
+
+                        //BlurFaces(GetFaceRectangles(_contentString), fileName);
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+                } 
+                else
+                {
+                    var baseUrl = new Uri(baseUri);
+                    var uriTest = new Uri(baseUrl, src[0]);
+
+                    try
+                    {
+                        System.Drawing.Image image = DownloadImageFromUrl(uriTest.AbsoluteUri);
+
+                        string rootPath = _he.WebRootPath;
+                        string fileName = System.IO.Path.Combine(rootPath, count + ".jpg");
+                        image.Save(fileName);
+                        count++;
+                    } 
+                    catch( Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    } 
+                }
+
+                //node.SetAttributeValue("src", "https://sun9-63.userapi.com/c637928/v637928334/1a2f7/6Yqr9p7PyXE.jpg");
+
+                //https://www.goethe.de/en/uun/org/pra.html USE THIS URL AS TEST
             }
+            
 
             ViewData["LoadedWebpage"] = document.DocumentNode.OuterHtml;
+        }
+
+        public bool CheckURLCorrect(string url)
+        {
+            Uri uriResult;
+            bool result = Uri.TryCreate(url, UriKind.Absolute, out uriResult)
+                && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+
+            return result;
+        }
+
+        public System.Drawing.Image DownloadImageFromUrl(string imageUrl)
+        {
+            System.Drawing.Image image = null;
+
+            try
+            {
+                System.Net.HttpWebRequest webRequest = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(imageUrl);
+                webRequest.AllowWriteStreamBuffering = true;
+                webRequest.Timeout = 30000;
+
+                System.Net.WebResponse webResponse = webRequest.GetResponse();
+
+                System.IO.Stream stream = webResponse.GetResponseStream();
+
+                image = System.Drawing.Image.FromStream(stream);
+
+                webResponse.Close();
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+
+            return image;
         }
 
         public IActionResult WebpageWithBlurredFaces (string url)
@@ -97,7 +209,7 @@ namespace FaceBlurApplication.Controllers
             return View();
         }
 
-        public IActionResult UploadImage(IFormFile img)
+        public void UploadImage(IFormFile img)
         {
             if (img != null)
             {
@@ -132,8 +244,6 @@ namespace FaceBlurApplication.Controllers
                     Console.WriteLine("\n" + e.Message + "\nPress Enter to exit...\n");
                 }
             }
-
-            return View();
         }
 
         public async Task MakeAnalysisRequest(string imageFilePath)
