@@ -13,15 +13,20 @@ using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 using System.Drawing;
 using HtmlAgilityPack;
+using System.Collections.Generic;
 
 namespace FaceBlurApplication.Controllers
 {
     public class HomeController : Controller
     {
+        // these variables are needed during runtime
+        public static Dictionary<string, HtmlDocument> dictURLs = new Dictionary<string, HtmlDocument>();
+        public static int count = 0;
+
         private readonly ILogger<HomeController> _logger;
         private readonly IWebHostEnvironment _he;
         private string _contentString;
-        private int blurCount = 0;
+
 
         const string subscriptionKey = "3d8c0a687bb64a27903b162a2badaf89";
 
@@ -50,6 +55,38 @@ namespace FaceBlurApplication.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
+        public IActionResult WebpageWithBlurredFaces(string url)
+        {
+            try
+            {
+                if (dictURLs.Count > 0)
+                {
+                    if (dictURLs.ContainsKey(url))
+                    {
+                        HtmlDocument existingHTML;
+                        dictURLs.TryGetValue(url, out existingHTML);
+                        ViewData["LoadedWebpage"] = existingHTML.DocumentNode.OuterHtml;
+                    } 
+                    else
+                    {
+                        Task t = LoadWebpage(url);
+                        t.Wait();
+                    }
+                }
+                else
+                {
+                    Task t = LoadWebpage(url);
+                    t.Wait();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                ViewData["LoadedWebpage"] = "ERROR";
+            }
+            return View();
+        }
+
         async Task LoadWebpage(string url)
         {
             HttpClient client = new HttpClient();
@@ -70,7 +107,6 @@ namespace FaceBlurApplication.Controllers
 
             var uri = new Uri(url);
             var baseUri = uri.GetLeftPart(System.UriPartial.Authority);
-            int count = 0;
 
             foreach (HtmlNode node in document.DocumentNode.SelectNodes("//img[@src]"))
             {
@@ -84,17 +120,19 @@ namespace FaceBlurApplication.Controllers
 
                         string rootPath = _he.WebRootPath;
                         string fileName = System.IO.Path.Combine(rootPath, count + ".jpg");
+
                         image.Save(fileName);
-                        count++;
 
                         Task t = MakeAnalysisRequest(fileName);
                         t.Wait();
 
                         if (GetFaceRectangles(_contentString).Count > 0)
                         {
-                            fileName = BlurFaces(GetFaceRectangles(_contentString), fileName);
+                            fileName = BlurFaces(GetFaceRectangles(_contentString), fileName, count);
 
                             node.SetAttributeValue("src", "https://localhost:5001/"+fileName);
+
+                            count++;
                         }
                     }
                     catch (Exception e)
@@ -113,17 +151,19 @@ namespace FaceBlurApplication.Controllers
 
                         string rootPath = _he.WebRootPath;
                         string fileName = System.IO.Path.Combine(rootPath, count + ".jpg");
+
                         image.Save(fileName);
-                        count++;
 
                         Task t = MakeAnalysisRequest(fileName);
                         t.Wait();
 
                         if (GetFaceRectangles(_contentString).Count > 0)
                         {
-                            fileName = BlurFaces(GetFaceRectangles(_contentString), fileName);
+                            fileName = BlurFaces(GetFaceRectangles(_contentString), fileName, count);
 
                             node.SetAttributeValue("src", "https://localhost:5001/" + fileName);
+
+                            count++;
                         }
                     } 
                     catch( Exception e)
@@ -132,7 +172,9 @@ namespace FaceBlurApplication.Controllers
                     } 
                 }
             }
-            
+
+            dictURLs.Add(url, document);
+
             ViewData["LoadedWebpage"] = document.DocumentNode.OuterHtml;
         }
 
@@ -165,24 +207,10 @@ namespace FaceBlurApplication.Controllers
             }
             catch (Exception ex)
             {
-                return null;
+                Console.WriteLine(ex.Message);
             }
 
             return image;
-        }
-
-        public IActionResult WebpageWithBlurredFaces (string url)
-        {
-            try
-            {
-                Task t = LoadWebpage(url);
-                t.Wait();
-            } catch(Exception e)
-            {
-                Console.WriteLine(e.Message);
-                ViewData["LoadedWebpage"] = "ERROR";
-            }
-            return View();
         }
 
         public async Task MakeAnalysisRequest(string imageFilePath)
@@ -241,7 +269,7 @@ namespace FaceBlurApplication.Controllers
             return faceRectangles;
         }
 
-        public string BlurFaces(JArray facesArray, string path)
+        public string BlurFaces(JArray facesArray, string path, int count)
         {
             Bitmap bitmap = new Bitmap(path);
    
@@ -257,16 +285,14 @@ namespace FaceBlurApplication.Controllers
                 bitmap = Blur(bitmap, 20, rectangle);
             }
 
-            string filePath = Path.Combine(_he.WebRootPath, blurCount+"blurred.jpg");
-            string fileName = blurCount + "blurred.jpg";
-            blurCount++;
+            string filePath = Path.Combine(_he.WebRootPath, count+"blurred.jpg");
+            string fileName = count + "blurred.jpg";
 
             bitmap.Save(filePath);
-
-            ViewData["blurredImage"] = "/blurred.jpg";
+            bitmap.Dispose();
+            bitmap = null;
 
             return fileName;
-  
         }
 
         private static Bitmap Blur(Bitmap image, Int32 blurSize, Rectangle rectToBlur)
