@@ -1,7 +1,7 @@
 # FaceBlur Application
 
-FaceBlur is a .Net application that utilises Face API by Microsoft to detect faces on photograps and then uses a custom algorithm to blur the faces. It uses an ASP.NET MVC template within Visual Studio.
-![alt text](https://raw.githubusercontent.com/glebmirolyubov/faceblurapp/master/GitImage.png)
+FaceBlur is a .Net application that utilises Face API by Microsoft to detect faces on images that are placed on websites (like Twitter and Instagram) and then by using a custom algorithm blurs them. It uses an ASP.NET MVC template within Visual Studio.
+![alt text](https://raw.githubusercontent.com/glebmirolyubov/faceblurapp/master/githubpreview.png)
 
 ## Getting Started
 
