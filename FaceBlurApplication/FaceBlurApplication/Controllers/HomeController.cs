@@ -130,7 +130,7 @@ namespace FaceBlurApplication.Controllers
                         {
                             fileName = BlurFaces(GetFaceRectangles(_contentString), fileName, count);
 
-                            node.SetAttributeValue("src", "https://localhost:5001/"+fileName);
+                            node.SetAttributeValue("src", "https://faceblurtest.azurewebsites.net/" + fileName);
 
                             count++;
                         }
@@ -161,7 +161,7 @@ namespace FaceBlurApplication.Controllers
                         {
                             fileName = BlurFaces(GetFaceRectangles(_contentString), fileName, count);
 
-                            node.SetAttributeValue("src", "https://localhost:5001/" + fileName);
+                            node.SetAttributeValue("src", "https://faceblurtest.azurewebsites.net/" + fileName);
 
                             count++;
                         }
