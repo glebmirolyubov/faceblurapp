@@ -3,6 +3,35 @@
     ViewData["Title"] = "WebpageWithBlurredFaces";
 }
 
+@if (ViewData["LoadedWebpage"].ToString() == "ERROR")
+{
+    <div class="text-center">
+        <h1>
+            Incorrect URL, please enter working URL and try again.
+        </h1>
+
+        <form method="post" action="/Home/">
+            <input type="submit" class="btn btn-primary" value="TRY AGAIN" />
+        </form>
+    </div>
+}
+else
+{
+<div class="text-center">
+    <h1>
+        Result*:
+    </h1>
+
+
     <div>
         <iframe srcdoc="@ViewData["LoadedWebpage"]" width="100%" height="600"></iframe>
     </div>
+
+    <p><i>*please note that FaceBlur is still in development and some faces on images might not be blurred. This is beacause many modern websites use other tags instead of img and it can be difficult to detect images.</i></p>
+
+    <form method="post" action="/Home/">
+        <input type="submit" class="btn btn-primary" value="TRY AGAIN" />
+    </form>
+</div>
+}
+
